@@ -4,6 +4,8 @@ local M = {}
 ---@field public name string required, the scope name which identifies it uniquely.
 ---@field public dirs string[] required, the list of directories for this scope, could be absolute or relative.
 ---@field public files string[] required, the list of files for this scope, could be absolute or relative.
+---@field public glob_pattern string[] required, the list of files for this scope, could be absolute or relative.
+---@field public additional_args string[] required, the list of files for this scope, could be absolute or relative.
 ---@field public origin string optional, identifies the origin from which the scope was defined IE: "git" - diff with a git branch or "npm" - an npm workspace
 ---@field public on_select function optional, called when the scope is selected, either programmatically or using the UI.
 local Scope = {}
@@ -41,11 +43,11 @@ local function get_scopes_from_package_json(name_prefix)
       local pkg_globs = tab.workspaces.packages
       for _, pkg_glob in pairs(pkg_globs) do
         for _, filename in ipairs(vim.fn.glob(pkg_glob .. "/package.json", true,
-                                    true)) do
+          true)) do
           filename = filename:gsub("/package.json$", "")
           table.insert(scope_list, {
             name = name_prefix .. filename,
-            dirs = {filename},
+            dirs = { filename },
             files = {},
             origin = "npm"
           })
@@ -77,7 +79,7 @@ local function get_scopes_from_git_diffs(branches, name_prefix)
       scope.on_select = function()
         -- refresh a git scope every time the scope is selected so that the list of
         -- files that differ are updated in the scope
-        local scopes_from_branch = get_scopes_from_git_diffs({to}, name_prefix)
+        local scopes_from_branch = get_scopes_from_git_diffs({ to }, name_prefix)
         for _, refreshed_scope in ipairs(scopes_from_branch) do
           M.add(refreshed_scope)
         end
@@ -107,9 +109,9 @@ M.setup = function(config)
     return
   end
   local project_level_config_filename = config.neoscopes_config_filename or
-                                          'neoscopes.config.json'
+      'neoscopes.config.json'
   local project_level_config = get_project_level_config(
-                                 project_level_config_filename)
+    project_level_config_filename)
   if config.scopes then
     M.add_all(config.scopes)
   end
@@ -117,7 +119,7 @@ M.setup = function(config)
     M.add_all(project_level_config.scopes)
   end
   if config.enable_scopes_from_npm or
-    project_level_config.enable_scopes_from_npm then
+      project_level_config.enable_scopes_from_npm then
     local npm_scopes = get_scopes_from_package_json()
     for _, scope in ipairs(npm_scopes) do
       M.add(scope)
@@ -125,12 +127,12 @@ M.setup = function(config)
   end
   if config.diff_branches_for_scopes then
     local git_scopes =
-      get_scopes_from_git_diffs(config.diff_branches_for_scopes)
+        get_scopes_from_git_diffs(config.diff_branches_for_scopes)
     M.add_all(git_scopes)
   end
   if project_level_config.diff_branches_for_scopes then
     local git_scopes = get_scopes_from_git_diffs(
-                         project_level_config.diff_branches_for_scopes)
+      project_level_config.diff_branches_for_scopes)
     M.add_all(git_scopes)
   end
   if config.add_dirs_to_all_scopes then
@@ -166,6 +168,12 @@ M.add = function(scope)
   elseif type(scope.files) ~= "table" then
     error(
       "scope.files must be a table of individual files to include in the scope (it is okay to be empty)")
+  elseif type(scope.glob_pattern) ~= "table" then
+    error(
+      "scope.glob_pattern must be a table of individual glob pattern to include in the scope (it is okay to be empty)")
+  elseif type(scope.additional_args) ~= "table" then
+    error(
+      "scope.additional_args must be a table of additional args to include in the scope (it is okay to be empty)")
   end
   for _, dir in ipairs(cross_scopes_dirs) do
     table.insert(scope.dirs, dir)
@@ -194,7 +202,7 @@ M.add_startup_scope = function()
   if #dirs == 0 then
     table.insert(dirs, vim.fn.getcwd())
   end
-  M.add({name = "<startup>", dirs = dirs})
+  M.add({ name = "<startup>", dirs = dirs })
   M.set_current("<startup>")
 end
 
@@ -293,7 +301,7 @@ local function select_with_native_ui()
     table.insert(names, name)
   end
   table.sort(names)
-  vim.ui.select(names, {prompt = "Select scope: "}, function(selected)
+  vim.ui.select(names, { prompt = "Select scope: " }, function(selected)
     if selected then
       M.set_current(selected)
     end
