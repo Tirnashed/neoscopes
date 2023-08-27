@@ -202,7 +202,7 @@ M.add_startup_scope = function()
   if #dirs == 0 then
     table.insert(dirs, vim.fn.getcwd())
   end
-  M.add({ name = "<startup>", dirs = dirs })
+  M.add({ name = "<startup>", dirs = dirs, additional_args = { "-i" } })
   M.set_current("<startup>")
 end
 
