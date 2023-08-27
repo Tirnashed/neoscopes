@@ -328,4 +328,29 @@ M.get_all_scopes = function()
   return scopes
 end
 
+M.find_files = function()
+  require("telescope.builtin").find_files {
+    search_dirs = current_scope.dirs,
+    glob_pattern = current_scope.glob_pattern,
+    additional_args = current_scope.additional_args,
+  }
+end
+
+
+M.live_grep = function()
+  require("telescope.builtin").live_grep {
+    search_dirs = current_scope.dirs,
+    glob_pattern = current_scope.glob_pattern,
+    additional_args = current_scope.additional_args,
+  }
+end
+
+M.grep_string = function()
+  require("telescope.builtin").grep_string {
+    search_dirs = current_scope.dirs,
+    glob_pattern = current_scope.glob_pattern,
+    additional_args = current_scope.additional_args,
+  }
+end
+
 return M
